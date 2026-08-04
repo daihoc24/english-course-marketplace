@@ -1,0 +1,45 @@
+# Runtime secrets
+.env
+*.env
+!.env.example
+!back_end/.env.example
+
+# Build output
+target/
+dist/
+build/
+*.class
+front_end/dist/
+front_end/node_modules/
+node_modules/
+
+# Local DB reset helper
+/scripts/DbDemoReset.java
+
+# Local AI / docs workspace artifacts
+/.agents/
+/.codex/
+/aidlc-docs/
+/aws-aidlc-rule-details/
+/back_end/SECURITY_TEST_GUIDE.md
+/back_end/TEST_DATA_SUMMARY.md
+/back_end/SECURITY_ANALYSIS.md
+/back_end/password_hash.md
+/front_end/README.md
+
+# IDE/editor
+.idea/
+.vscode/
+.kiro/
+*.iml
+*.ipr
+*.iws
+
+# Logs and local recordings
+*.log
+*.mp4
+bandicam*.mp4
+
+# OS files
+.DS_Store
+Thumbs.db

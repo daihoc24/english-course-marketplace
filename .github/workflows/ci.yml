@@ -1,0 +1,60 @@
+name: Kiem tra chat luong
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend - build Maven
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: back_end
+    steps:
+      - name: Lay ma nguon
+        uses: actions/checkout@v4
+
+      - name: Cai dat Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Kiem tra, test va dong goi
+        run: ./mvnw -B package
+
+  frontend:
+    name: Frontend - lint, typecheck va build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: front_end
+    steps:
+      - name: Lay ma nguon
+        uses: actions/checkout@v4
+
+      - name: Cai dat Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: front_end/package-lock.json
+
+      - name: Cai dat dependencies
+        run: npm ci
+
+      - name: Kiem tra lint
+        run: npm run lint
+
+      - name: Kiem tra TypeScript
+        run: npm run typecheck
+
+      - name: Build production
+        run: npm run build
