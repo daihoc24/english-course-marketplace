@@ -17,12 +17,12 @@ import com.example.back_end.repositories.OrderRepository;
 import com.example.back_end.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.Comparator;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -127,14 +127,27 @@ public class SellerService {
     }
 
     public Page<CourseSummaryDTO> getSellerCourses(Integer sellerId, String keyword, String level, String status, Pageable pageable) {
-        return courseRepository.searchSellerManagedCourses(
-                        sellerId,
-                        normalizeKeyword(keyword),
-                        normalizeText(level),
-                        normalizeStatus(status),
-                        pageable
-                )
-                .map(this::toCourseSummary);
+        Pageable safePageable = pageable == null ? Pageable.unpaged() : pageable;
+        String safeKeyword = normalizeKeyword(keyword);
+        String safeLevel = normalizeText(level);
+        String safeStatus = normalizeStatus(status);
+
+        List<Course> filteredCourses = courseRepository.findBySellerIdOrderByIdDesc(sellerId).stream()
+                .filter(course -> matchesKeyword(course, safeKeyword))
+                .filter(course -> safeLevel == null || safeLevel.equalsIgnoreCase(course.getLevel()))
+                .filter(course -> matchesSellerCourseStatus(course, safeStatus))
+                .toList();
+
+        int start = pageStart(safePageable, filteredCourses.size());
+        int end = safePageable.isUnpaged()
+                ? filteredCourses.size()
+                : Math.min(start + safePageable.getPageSize(), filteredCourses.size());
+
+        List<CourseSummaryDTO> content = filteredCourses.subList(start, end).stream()
+                .map(this::toCourseSummary)
+                .toList();
+
+        return new PageImpl<>(content, safePageable, filteredCourses.size());
     }
 
     public SellerStatsResponseDTO getSellerStats(Integer sellerId) {
@@ -301,6 +314,50 @@ public class SellerService {
                 .reviewStatus(latestReview == null ? null : latestReview.getStatus())
                 .rejectionReason(latestReview == null ? null : latestReview.getRejectionReason())
                 .build();
+    }
+
+    private boolean matchesKeyword(Course course, String keyword) {
+        if (keyword == null) {
+            return true;
+        }
+        String lowerKeyword = keyword.toLowerCase(Locale.ROOT);
+        return containsIgnoreCase(course.getName(), lowerKeyword)
+                || containsIgnoreCase(course.getDescription(), lowerKeyword);
+    }
+
+    private boolean containsIgnoreCase(String value, String lowerKeyword) {
+        return value != null && value.toLowerCase(Locale.ROOT).contains(lowerKeyword);
+    }
+
+    private boolean matchesSellerCourseStatus(Course course, String status) {
+        if (status == null) {
+            return true;
+        }
+        CourseReviewRequest latestReview = courseReviewRequestRepository
+                .findTopByCourse_IdOrderBySubmittedAtDesc(course.getId())
+                .orElse(null);
+        String reviewStatus = latestReview == null ? null : normalizeStatus(latestReview.getStatus());
+        boolean published = Boolean.TRUE.equals(course.getStatus());
+
+        return switch (status) {
+            case "APPROVED" -> published;
+            case "PENDING" -> !published && "PENDING".equals(reviewStatus);
+            case "REJECTED" -> !published && "REJECTED".equals(reviewStatus);
+            case "DRAFT" -> !published && (reviewStatus == null
+                    || (!"PENDING".equals(reviewStatus) && !"REJECTED".equals(reviewStatus)));
+            default -> true;
+        };
+    }
+
+    private int pageStart(Pageable pageable, int totalElements) {
+        if (pageable == null || pageable.isUnpaged()) {
+            return 0;
+        }
+        long offset = pageable.getOffset();
+        if (offset >= totalElements) {
+            return totalElements;
+        }
+        return (int) offset;
     }
 
     private SellerRevenueResponseDTO.TransactionData toTransactionData(Order order) {

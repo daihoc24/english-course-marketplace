@@ -191,8 +191,9 @@ public class CourseServiceImpl {
     public List<CourseListResponseDTO> searchCoursesAdvanced(String keyword, Integer categoryId, 
                                                            Double minPrice, Double maxPrice, 
                                                            Double minRating, Boolean status) {
-        List<Course> courses = courseRepository.findCoursesWithFilters(
-                keyword, categoryId, minPrice, maxPrice, minRating, status);
+        List<Course> courses = courseRepository.findAll(
+                buildCourseSpecification(keyword, categoryId, minPrice, maxPrice, minRating, status),
+                Sort.by(Sort.Direction.DESC, "id"));
         
         return courses.stream()
                 .map(course -> {
@@ -447,7 +448,7 @@ public class CourseServiceImpl {
     
     // Tìm kiếm khóa học theo từ khóa
     public List<CourseListResponseDTO> searchCoursesByKeyword(String keyword) {
-        List<Course> courses = courseRepository.findByNameOrDescriptionContainingIgnoreCase(keyword);
+        List<Course> courses = courseRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(keyword, keyword);
         return convertToResponseDTOList(courses);
     }
     
