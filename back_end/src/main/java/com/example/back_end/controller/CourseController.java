@@ -58,9 +58,16 @@ public class CourseController {
     private LessonProgressRepository lessonProgressRepository;
 
     @GetMapping
-    public ApiResponse<List<CourseListResponseDTO>> getAllCourses() {
+    public ApiResponse<List<CourseListResponseDTO>> getAllCourses(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size) {
         try {
-            List<CourseListResponseDTO> courses = courseService.getAllCourses();
+            page = Math.max(0, page);
+            size = Math.max(1, Math.min(size, 24));
+            List<CourseListResponseDTO> courses = courseService.searchCoursesAdvancedPaginated(
+                            null, null, null, null, null, true,
+                            page, size, "createdDate", "desc")
+                    .getContent();
             return ApiResponse.<List<CourseListResponseDTO>>builder()
                     .code(200)
                     .message("Fetched all courses successfully.")

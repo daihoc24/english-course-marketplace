@@ -32,7 +32,7 @@ public class SecurityConfig {
             "/auth/login", "auth/login", "/auth/introspect", "auth/introspect",
             "/auth/reset-password", "auth/reset-password", "/verifyRegister", "/verifyRegister/**",
             "/forgotPassword", "forgotPassword", "/users/existUser", "users/existUser"};
-    private static final String[] PUBLIC_ENDPOINTS_GET_PERMIT_ALL = {"/auth/verifyAccount", "/courses",
+    private static final String[] PUBLIC_ENDPOINTS_GET_PERMIT_ALL = {"/ping", "/auth/verifyAccount", "/courses",
             "/courses/categories", "/courses/{id}", "/courses/details/{id}", "/courses/{id}/learning-content", "/courses/{courseId}/comments",
             "/courses/search/**", "/seller/{sellerId}/courses",
             "/seller/teachers/catalog", "/seller/{courseId}", "/users/id/{userId}", "/notifications/stream"};
@@ -71,7 +71,6 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2.defaultSuccessUrl("/auth/oauth2/success", true))
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
-                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS_POST_PERMIT_ALL).permitAll()
                         .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS_GET_PERMIT_ALL).permitAll()
                         .requestMatchers(HttpMethod.GET, AUTHENTICATED_GET_ENDPOINTS).authenticated()

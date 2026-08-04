@@ -30,6 +30,7 @@ import com.example.back_end.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -70,6 +71,7 @@ public class DemoDataConfiguration {
 
     @Bean
     @org.springframework.core.annotation.Order(2)
+    @ConditionalOnProperty(prefix = "app.demo-data", name = "enabled", havingValue = "true")
     ApplicationRunner demoAccounts(
             @Value("${DEMO_LEARNER_PASSWORD}") String learnerPassword,
             @Value("${DEMO_SELLER_PASSWORD}") String sellerPassword,
